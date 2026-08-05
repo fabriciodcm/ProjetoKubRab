@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="ProjectKubRab.API/ProjectKubRab.API.csproj" />
+  <Project Path="ProjectKubRab.ProductsWebApp/ProjectKubRab.ProductsWebApp.csproj" Id="d2fc3353-e913-4641-9621-534184ac3290" />
+  <Project Path="ProjectKubRab.Test/ProjectKubRab.Test.csproj" Id="e5d2bcb8-1906-41df-bf9e-1d7110cc0927" />
+  <Project Path="ProjectKubRab.Worker/ProjectKubRab.Worker.csproj" />
+</Solution>

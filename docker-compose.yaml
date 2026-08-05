@@ -1,0 +1,75 @@
+x-worker-base: &worker-base
+  build:
+    context: ./src/ProjectKubRab/ProjectKubRab.Worker
+    dockerfile: Dockerfile
+  depends_on:
+    - dotnetproductspage
+    - api
+  networks:
+    - public-network
+
+services:
+  mongodb:
+    image: mongo:8.3.7
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./docker/mongodb/data/db:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root1234
+    networks:
+      - public-network
+  productspage:
+    image: nginx:alpine
+    ports:
+      - "8181:80"
+    volumes:
+      - ./docker/productspage/index.html:/usr/share/nginx/html/index.html:ro
+    networks:
+      - public-network
+  reactproductspage:
+    build:
+      context: ./src/ProjectKubRab/ProjectKubRab.ProductsWebApp
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    networks:
+      - public-network
+  dotnetproductspage:
+    build:
+      context: ./src/ProjectKubRab/ProjectKubRab.ProductsWebApp
+      dockerfile: Dockerfile
+    ports:
+      - "8585:8080"
+    networks:
+      - public-network
+  api:
+    build:
+      context: ./src/ProjectKubRab
+      dockerfile: ProjectKubRab.API/Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongodb
+    networks:
+      - public-network
+  worker-msi-rtx-5060-ti-ventus-2x-oc-plus:
+    <<: *worker-base
+    command: ["MSI RTX 5060 Ti Ventus 2X OC Plus"]
+  worker-msi-geforce-rtx-5070-12g-ventus-2x-oc:
+    <<: *worker-base
+    command: ["MSI GeForce RTX 5070 12G VENTUS 2X OC"]
+  worker-asrock-rx-9060-xt-cl-16gb-amd-radeon:
+    <<: *worker-base
+    command: ["ASRock RX 9060 XT CL 16GB AMD Radeon"]
+  worker-asrock-rx-9070-xt-challenger-amd-16gb:
+    <<: *worker-base
+    command: ["ASRock RX 9070 XT Challenger AMD 16GB"]
+  worker-asus-tuf-rtx-5070-ti-16g-gaming-16gb:
+    <<: *worker-base
+    command: ["Asus TUF-RTX 5070 TI 16G GAMING 16GB"]
+networks:
+  public-network:
+    driver: bridge

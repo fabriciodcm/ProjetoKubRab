@@ -1,0 +1,13 @@
+﻿@{
+	
+}
+<main class="container">
+	<h1>Lista de Produtos</h1>
+	<p>Precos com variacao aleatoria entre -7% e +7% sobre o valor base.</p>
+	<ul id="products-list">
+		@foreach (var item in Model)
+		{
+			<li><span class="name">@item.Name</span><span class="price">@item.CalculatedPrice</span></li>
+		}
+	</ul>
+</main>

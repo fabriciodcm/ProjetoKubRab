@@ -1,0 +1,87 @@
+# .NET build outputs
+**/bin/
+**/obj/
+**/out/
+TestResults/
+**/TestResults/
+coverage/
+coverage.*
+*.coverage
+*.coveragexml
+*.trx
+artifacts/
+
+# Visual Studio, VS Code, JetBrains and user settings
+.vs/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.rsuser
+*.DotSettings.user
+
+# Node.js, React, Vite and TypeScript
+**/node_modules/
+**/dist/
+**/dist-ssr/
+**/.vite/
+**/.eslintcache
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local configuration, environment files and secrets
+.env
+.env.*
+!.env.example
+!.env.sample
+appsettings.*.local.json
+secrets.json
+*.local
+
+# Docker Compose overrides and persistent container data
+docker-compose.override.yml
+docker-compose.override.yaml
+compose.override.yml
+compose.override.yaml
+docker/**/data/
+docker/**/logs/
+docker/rabbitmq/mnesia/
+docker/rabbitmq/log/
+
+# Kubernetes and Helm local/generated files
+.kube/
+kubeconfig
+kubeconfig.*
+*.kubeconfig
+*.local.yaml
+*.local.yml
+*.secret.yaml
+*.secret.yml
+*.sealed-secret.unsealed.yaml
+*.sealed-secret.unsealed.yml
+charts/*.tgz
+**/charts/*.tgz
+**/charts/*/
+.helm/
+.helmignore.local
+
+# Operating-system and temporary files
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.tmp
+*.temp
+*.swp
+*.bak
+*~
+
+# Logs
+logs/
+*.log
