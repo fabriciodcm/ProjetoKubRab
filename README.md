@@ -22,16 +22,18 @@ Como evolução, o projeto terá o **RabbitMQ** para comunicação assíncrona e
 - [x] **PRONTO** — Página Web contendo produtos. A cada requisição o valor dos produtos sofre um acréscimo aleatório que varia de -7% a 7% do valor base do produto. Foi feita em 3 versão, HTML E JS, REACT, .NET MVC.
 - [x] **PRONTO** — Extração dos dados do produto desejado utilizando HtmlAgilityPack no Worker. Foi utilizado o .NET MVC para simplificar o projeto pois ele já trás a página renderizado do backend. Para utilizar as versões contendo JS seria necessário utilizar um Headless Browser como o Selenium ou Playwright pois o HtmlAgilityPack não executa o JS para renderizar a página com produtos. 
 - [x] **PRONTO** — O Worker adicionar o produto extraido na fila do RabbitMQ(Direct).
-- [ ] **PENDENTE** — O API ler o produto extraido da fila do RabbitMQ(Direct), caso o produto já exista para o dia da leitura atualizar o registro do dia, se não inserir um novo. 
+- [X] **PRONTO** — O API ler o produto extraido da fila do RabbitMQ(Direct), caso o produto já exista para o dia da leitura atualizar o registro do dia, se não inserir um novo. 
+- [ ] **PENDENTE** — Usar Secrets no Docker Compose e variáveis de ambiente nas aplicações. 
 - [ ] **PENDENTE** — Adicionar a API no Kubernetes com duas instâncias rodando. Adicionar Delay no processamento de filas de Produtos para visualizar o LoadBalancer rotear requisições no log (e se necessário adicionar mais produtos para processamento). 
 
 
 ## IMPROVEMENTS TO DO LIST 
 
 
+- [ ] **PENDENTE** — Melhorar a legibilidade do Producer e Consumer da fila de Produtos usando o Exchange Direct.
 - [ ] **PENDENTE** — Extração dos dados do produto desejado utilizando Selenium ou Playwright.
 - [ ] **PENDENTE** — Script de criação e população de registros de produtos no MongoDB.
-- [ ] **PENDENTE** — Na leitura do produto da fila do RabbitMQ(Direct), verificar se é o menor preço registrado ou se o preço está abaixo de 5% da primeira leitura de produto, adicionar um Topic (promo.notify.*) no RabbitMQ para serviços de notificação.
+- [ ] **PENDENTE** — Na leitura do produto da fila do RabbitMQ(Direct), verificar se é o menor preço registrado ou se o preço está abaixo de 5% da primeira leitura de produto, adicionar um Exchange Topic (promo.notify.*) no RabbitMQ para serviços de notificação.
 - [ ] **PENDENTE** — Cria diferentes abstrações de serviços de notificação que leem a notificação do RabbitMQ (ex: promo.notify.email, promo.notify.notificationhub, promo.notify.sms etc).
 
 

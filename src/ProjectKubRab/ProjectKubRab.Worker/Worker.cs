@@ -18,6 +18,8 @@ public class Worker(
         #endif
         if(products != null && products.Length > 0)
         {
+            var messages = new HashSet<string>();
+
             foreach (var product in products)
             {
                 if (!string.IsNullOrEmpty(product))
@@ -40,9 +42,10 @@ public class Worker(
 
                         var jsonContent = System.Text.Json.JsonSerializer.Serialize(extractedProduct);
 
-                        await productProducer.Execute(jsonContent, stoppingToken);
+                        messages.Add(jsonContent);
                     }
                 }
+                await productProducer.Execute(messages.Where(x => !String.IsNullOrEmpty(x)).ToArray(), stoppingToken);
             }
         }
         else
