@@ -4,36 +4,45 @@ namespace ProjectKubRab.Worker;
 
 public class Worker(
     ILogger<Worker> logger,
-    string product,
+    string[] products,
     IProductClient productClient,
-    IProductHtmlExtractor productHtmlExtractor) : BackgroundService
+    IProductHtmlExtractor productHtmlExtractor,
+    IProductProducer productProducer) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         #if DEBUG
-        product = String.IsNullOrEmpty(product) ? "ASRock RX 9060 XT CL 16GB AMD Radeon" : product;
+        if (products == null || products.Length == 0){
+            products = new[] { "ASRock RX 9060 XT CL 16GB AMD Radeon" };
+        }
         #endif
-
-        if (!string.IsNullOrEmpty(product))
+        if(products != null && products.Length > 0)
         {
-            logger.LogInformation("Worker is starting for product: {product}", product);
-            var htmlContent = await productClient.GetHtmlContentFromProductsPageAsync(stoppingToken);
-            var extractedProduct = await productHtmlExtractor.ExtractDesiredProductAsync(htmlContent, product);
-
-            if (extractedProduct is null)
+            foreach (var product in products)
             {
-                logger.LogWarning("Product not found in HTML content. Desired product: {product}", product);
-                return;
-            }
-            else
-            {
-                logger.LogInformation(
-                    "Product found in HTML content. Product: {product}. Price: {price}",
-                    extractedProduct.Name,
-                    extractedProduct.Price);
+                if (!string.IsNullOrEmpty(product))
+                {
+                    logger.LogInformation("Worker is starting for product: {product}", product);
+                    var htmlContent = await productClient.GetHtmlContentFromProductsPageAsync(stoppingToken);
+                    var extractedProduct = await productHtmlExtractor.ExtractDesiredProductAsync(htmlContent, product);
 
-                //TODO inserir no RabbitMQ
-                await Task.Delay(1000, stoppingToken);
+                    if (extractedProduct is null)
+                    {
+                        logger.LogWarning("Product not found in HTML content. Desired product: {product}", product);
+                        return;
+                    }
+                    else
+                    {
+                        logger.LogInformation(
+                            "Product found in HTML content. Product: {product}. Price: {price}",
+                            extractedProduct.Name,
+                            extractedProduct.Price);
+
+                        var jsonContent = System.Text.Json.JsonSerializer.Serialize(extractedProduct);
+
+                        await productProducer.Execute(jsonContent, stoppingToken);
+                    }
+                }
             }
         }
         else

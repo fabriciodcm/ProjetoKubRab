@@ -5,6 +5,7 @@ x-worker-base: &worker-base
   depends_on:
     - dotnetproductspage
     - api
+    - rabbitmq
   networks:
     - public-network
 
@@ -19,6 +20,17 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: root1234
+    networks:
+      - public-network
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: app
+      RABBITMQ_DEFAULT_PASS: app123
+    ports:
+      - "5672:5672"
+      - "15672:15672"
     networks:
       - public-network
   productspage:
@@ -53,6 +65,7 @@ services:
       - "8080:8080"
     depends_on:
       - mongodb
+      - rabbitmq
     networks:
       - public-network
   worker-msi-rtx-5060-ti-ventus-2x-oc-plus:
