@@ -18,7 +18,7 @@ namespace ProjectKubRab.API.Infrastructure.Messaging
         {
             var factory = new ConnectionFactory
             {
-                HostName = "host.docker.internal",
+                HostName = "rabbitmq",
                 Port = 5672,
                 UserName = "app",
                 Password = "app123",

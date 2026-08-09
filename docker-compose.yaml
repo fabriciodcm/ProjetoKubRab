@@ -1,7 +1,9 @@
 x-worker-base: &worker-base
   build:
-    context: ./src/ProjectKubRab/ProjectKubRab.Worker
-    dockerfile: Dockerfile
+    context: ./src/ProjectKubRab
+    dockerfile: ProjectKubRab.Worker/Dockerfile
+    args:
+      BUILD_CONFIGURATION: Release
   depends_on:
     - dotnetproductspage
     - api
@@ -12,22 +14,22 @@ x-worker-base: &worker-base
 services:
   mongodb:
     image: mongo:8.3.7
-    container_name: mongodb
+    #container_name: mongodb
     ports:
       - "27017:27017"
     volumes:
       - ./docker/mongodb/data/db:/data/db
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: root1234
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
     networks:
       - public-network
   rabbitmq:
     image: rabbitmq:3-management
-    container_name: rabbitmq
+    #container_name: rabbitmq
     environment:
-      RABBITMQ_DEFAULT_USER: app
-      RABBITMQ_DEFAULT_PASS: app123
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -61,26 +63,30 @@ services:
     build:
       context: ./src/ProjectKubRab
       dockerfile: ProjectKubRab.API/Dockerfile
+      args:
+        BUILD_CONFIGURATION: Debug
     ports:
       - "8080:8080"
     depends_on:
       - mongodb
       - rabbitmq
+    environment:
+      - MongoDB__ConnectionString=mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongodb:27017/?authSource=admin
     networks:
       - public-network
-  worker-msi-rtx-5060-ti-ventus-2x-oc-plus:
+  worker-1:
     <<: *worker-base
     command: ["MSI RTX 5060 Ti Ventus 2X OC Plus"]
-  worker-msi-geforce-rtx-5070-12g-ventus-2x-oc:
+  worker-2:
     <<: *worker-base
     command: ["MSI GeForce RTX 5070 12G VENTUS 2X OC"]
-  worker-asrock-rx-9060-xt-cl-16gb-amd-radeon:
+  worker-3:
     <<: *worker-base
     command: ["ASRock RX 9060 XT CL 16GB AMD Radeon"]
-  worker-asrock-rx-9070-xt-challenger-amd-16gb:
+  worker-4:
     <<: *worker-base
     command: ["ASRock RX 9070 XT Challenger AMD 16GB"]
-  worker-asus-tuf-rtx-5070-ti-16g-gaming-16gb:
+  worker-5:
     <<: *worker-base
     command: ["Asus TUF-RTX 5070 TI 16G GAMING 16GB"]
 networks:

@@ -1,0 +1,17 @@
+{
+  "profiles": {
+    "Docker Compose": {
+      "commandName": "DockerCompose",
+      "commandVersion": "1.0",
+      "serviceActions": {
+        "api": "StartDebugging",
+        "dotnetproductspage": "StartWithoutDebugging",
+        "worker-1": "StartWithoutDebugging",
+        "worker-2": "StartWithoutDebugging",
+        "worker-3": "StartWithoutDebugging",
+        "worker-4": "StartWithoutDebugging",
+        "worker-5": "StartWithoutDebugging"
+      }
+    }
+  }
+}

@@ -10,10 +10,10 @@ WORKDIR /app
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["ProjectKubRab.Worker/ProjectKubRab.Worker.csproj", "ProjectKubRab.Worker/"]
-RUN dotnet restore "./ProjectKubRab.Worker/ProjectKubRab.Worker.csproj"
+COPY ["ProjectKubRab.Worker.csproj", "."]
+RUN dotnet restore "./ProjectKubRab.Worker.csproj"
 COPY . .
-WORKDIR "/src/ProjectKubRab.Worker"
+WORKDIR "/src/."
 RUN dotnet build "./ProjectKubRab.Worker.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # Esta fase é usada para publicar o projeto de serviço a ser copiado para a fase final

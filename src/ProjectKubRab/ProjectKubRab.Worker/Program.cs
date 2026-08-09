@@ -7,7 +7,7 @@ using ProjectKubRab.Worker.Infrastructure.Parsing;
 var builder = Host.CreateApplicationBuilder(args);
 
 builder.Services.AddHttpClient<IProductClient, ProductClient>(c =>
-    c.BaseAddress = new Uri("http://localhost:8585"));
+    c.BaseAddress = new Uri("http://dotnetproductspage:8080"));
 builder.Services.AddSingleton<IProductHtmlExtractor, ProductHtmlExtractor>();
 builder.Services.AddSingleton<IProductProducer, ProductProducer>();
 

@@ -9,7 +9,7 @@ namespace ProjectKubRab.Worker.Infrastructure.Messaging.Producers
         {
             var factory = new ConnectionFactory
             {
-                HostName = "localhost",
+                HostName = "rabbitmq",
                 Port = 5672,
                 UserName = "app",
                 Password = "app123"
