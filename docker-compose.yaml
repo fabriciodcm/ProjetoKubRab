@@ -3,9 +3,18 @@ x-worker-base: &worker-base
     context: ./src/ProjectKubRab/ProjectKubRab.Worker
     dockerfile: Dockerfile
   depends_on:
-    - dotnetproductspage
-    - api
-    - rabbitmq
+    dotnetproductspage:
+      condition: service_started
+    api:
+      condition: service_started
+    rabbitmq:
+      condition: service_healthy
+  environment:
+    - RabbitMQ__HostName=rabbitmq
+    - RabbitMQ__Port=5672
+    - RabbitMQ__UserName=app
+    - RabbitMQ__Password=app123
+    - ProductApi__BaseUrl=http://dotnetproductspage:8080
   networks:
     - public-network
 
@@ -31,22 +40,12 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
-    networks:
-      - public-network
-  productspage:
-    image: nginx:alpine
-    ports:
-      - "8181:80"
-    volumes:
-      - ./docker/productspage/index.html:/usr/share/nginx/html/index.html:ro
-    networks:
-      - public-network
-  reactproductspage:
-    build:
-      context: ./src/ProjectKubRab/ProjectKubRab.ProductsWebApp
-      dockerfile: Dockerfile
-    ports:
-      - "3000:80"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_port_connectivity"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
     networks:
       - public-network
   dotnetproductspage:
@@ -62,25 +61,51 @@ services:
       context: ./src/ProjectKubRab
       dockerfile: ProjectKubRab.API/Dockerfile
     ports:
-      - "8080:8080"
+      - "8181:8080"
     depends_on:
-      - mongodb
-      - rabbitmq
+      mongodb:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - MongoDB__ConnectionString=mongodb://root:root1234@mongodb:27017/?authSource=admin
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__UserName=app
+      - RabbitMQ__Password=app123
     networks:
       - public-network
-  worker-msi-rtx-5060-ti-ventus-2x-oc-plus:
+
+  #productspage:
+  #  image: nginx:alpine
+  #  ports:
+  #    - "8181:80"
+  #  volumes:
+  #    - ./docker/productspage/index.html:/usr/share/nginx/html/index.html:ro
+  #  networks:
+  #    - public-network
+  #reactproductspage:
+  #  build:
+  #    context: ./src/ProjectKubRab/ProjectKubRab.ProductsWebApp
+  #    dockerfile: Dockerfile
+  #  ports:
+  #    - "3000:80"
+  #  networks:
+  #    - public-network
+
+  worker-1:
     <<: *worker-base
     command: ["MSI RTX 5060 Ti Ventus 2X OC Plus"]
-  worker-msi-geforce-rtx-5070-12g-ventus-2x-oc:
+  worker-2:
     <<: *worker-base
     command: ["MSI GeForce RTX 5070 12G VENTUS 2X OC"]
-  worker-asrock-rx-9060-xt-cl-16gb-amd-radeon:
+  worker-3:
     <<: *worker-base
     command: ["ASRock RX 9060 XT CL 16GB AMD Radeon"]
-  worker-asrock-rx-9070-xt-challenger-amd-16gb:
+  worker-4:
     <<: *worker-base
     command: ["ASRock RX 9070 XT Challenger AMD 16GB"]
-  worker-asus-tuf-rtx-5070-ti-16g-gaming-16gb:
+  worker-5:
     <<: *worker-base
     command: ["Asus TUF-RTX 5070 TI 16G GAMING 16GB"]
 networks:

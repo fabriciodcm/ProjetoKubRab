@@ -3,16 +3,16 @@ using RabbitMQ.Client;
 
 namespace ProjectKubRab.Worker.Infrastructure.Messaging.Producers
 {
-    public class ProductProducer : IProductProducer
+    public class ProductProducer(RabbitMQOptions rabbitMQOptions) : IProductProducer
     {
         public async Task Execute(string[] messages, CancellationToken stoppingToken)
         {
             var factory = new ConnectionFactory
             {
-                HostName = "localhost",
-                Port = 5672,
-                UserName = "app",
-                Password = "app123"
+                HostName = rabbitMQOptions.HostName,
+                Port = rabbitMQOptions.Port,
+                UserName = rabbitMQOptions.UserName,
+                Password = rabbitMQOptions.Password
             };
 
             using var connection = await factory.CreateConnectionAsync();

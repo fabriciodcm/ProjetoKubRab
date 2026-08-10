@@ -4,7 +4,9 @@ using ProjectKubRab.API.Core.Interfaces.Repositories;
 using ProjectKubRab.API.Core.Interfaces.Services;
 using ProjectKubRab.API.Core.Services;
 using ProjectKubRab.API.Infrastructure.Messaging;
+using ProjectKubRab.API.Infrastructure.Messaging.Consumers;
 using ProjectKubRab.API.Infrastructure.Persistence.Repositories;
+using RabbitMQ.Client;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,6 +39,30 @@ builder.Services.AddSingleton<IMongoDatabase>(serviceProvider =>
 });
 
 #endregion
+#region RabbitMQ Config
+builder.Services.AddSingleton<RabbitMQOptions>(opt =>
+{
+    var rabbitMQOptions = new RabbitMQOptions();
+    builder.Configuration.GetSection("RabbitMQ").Bind(rabbitMQOptions);
+
+    return rabbitMQOptions;
+});
+
+builder.Services.AddSingleton<IConnectionFactory>(opt =>
+{
+    var _rabbitMQOptions = opt.GetRequiredService<RabbitMQOptions>();
+    var factory = new ConnectionFactory
+    {
+        HostName = _rabbitMQOptions.HostName,
+        Port = _rabbitMQOptions.Port,
+        UserName = _rabbitMQOptions.UserName,
+        Password = _rabbitMQOptions.Password,
+        AutomaticRecoveryEnabled = _rabbitMQOptions.AutomaticRecoveryEnabled
+    };
+    return factory;
+});
+#endregion
+
 builder.Services.AddTransient<IProductRepository, ProductRepository>();
 builder.Services.AddTransient<IProductService, ProductService>();
 builder.Services.AddHostedService<ProductConsumer>();

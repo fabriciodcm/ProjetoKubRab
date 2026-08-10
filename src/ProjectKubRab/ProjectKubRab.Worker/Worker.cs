@@ -26,6 +26,7 @@ public class Worker(
                 {
                     logger.LogInformation("Worker is starting for product: {product}", product);
                     var htmlContent = await productClient.GetHtmlContentFromProductsPageAsync(stoppingToken);
+                    logger.LogInformation("Products from ProfuctPage completed : {success}", !string.IsNullOrEmpty(htmlContent) ? "Success" : "Failed");
                     var extractedProduct = await productHtmlExtractor.ExtractDesiredProductAsync(htmlContent, product);
 
                     if (extractedProduct is null)
@@ -46,6 +47,7 @@ public class Worker(
                     }
                 }
                 await productProducer.Execute(messages.Where(x => !String.IsNullOrEmpty(x)).ToArray(), stoppingToken);
+                logger.LogInformation("Products added to queue : {products}", messages.Count);
             }
         }
         else
