@@ -44,7 +44,8 @@ namespace ProjectKubRab.API.Infrastructure.Messaging.Consumers
                     var product = System.Text.Json.JsonSerializer.Deserialize<Core.Models.ViewModels.ProductViewModel>(message);
                     if (product is object)
                     {
-                        _logger.LogInformation("Product {product} received.", product.Name);
+                        var productDescription = product.ToString();
+                        _logger.LogInformation("Product {productDescription} received.", productDescription);
                         await _productService.RegisterReadingAsync(product);
                     }
 
