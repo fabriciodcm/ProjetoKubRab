@@ -18,6 +18,31 @@ A solução reúne diferentes componentes responsáveis pela coleta, disponibili
 
 Como evolução, o projeto terá suporte ao **Kubernetes** para implantação e orquestração dos containers.
 
+## COMO EXECUTAR
+
+
+**Docker Compose** é necessário apenas executar o comando para rodar os serviços.
+
+docker-compose up -d 
+
+**Kubernetes** primeiro, crie o cluster local com o Kind usando as configurações de k8s/kind-config.yaml. Em seguida, construa as imagens Docker de cada aplicação e carregue-as nos nós do cluster Kind. Depois, aplique os recursos definidos no manifesto k8s/deployment.yaml. A API é exposta por um Service do tipo NodePort, acessível pela porta 5000 do host. Para acessar diretamente serviços internos, como o MongoDB ou a página de produtos, utilize kubectl port-forward em terminais separados. 
+
+kind create cluster --config k8s/kind-config.yaml
+
+docker build -t projectkubrab-api:latest -f src/ProjectKubRab/ProjectKubRab.API/Dockerfile src/ProjectKubRab/ProjectKubRab.API
+
+docker build -t projectkubrab-products-page:latest -f src/ProjectKubRab/ProjectKubRab.ProductsWebApp/Dockerfile src/ProjectKubRab/ProjectKubRab.ProductsWebApp
+
+docker build -t projectkubrab-worker:latest -f src/ProjectKubRab/ProjectKubRab.Worker/Dockerfile src/ProjectKubRab/ProjectKubRab.Worker
+
+kind load docker-image projectkubrab-api:latest projectkubrab-products-page:latest projectkubrab-worker:latest
+
+kubectl apply -f k8s/deployment.yaml
+
+kubectl port-forward svc/mongodb 27017:27017
+
+kubectl port-forward svc/dotnetproductspage 8080:8080
+
 ## ESSENTIALS TO-DO LIST
 
 
@@ -26,12 +51,12 @@ Como evolução, o projeto terá suporte ao **Kubernetes** para implantação e 
 - [x] **PRONTO** — O Worker adiciona o produto extraido na fila do RabbitMQ(Direct).
 - [x] **PRONTO** — O API lê o produto extraído da fila do RabbitMQ(Direct). Caso já exista um registro do produto na data da leitura, a API atualiza esse registro; caso contrário, insere um novo. 
 - [x] **PRONTO** — Usar variáveis de ambiente nas aplicações a fim de poder depurar localmente ou via Docker Compose sem precisar alterar as cadeias de conexão(ex: url da página de produtos local localhost:8585 e via Docker Compose dotnetproductspage:8080). 
-- [ ] **PENDENTE** — Adicionar a API no Kubernetes com duas instâncias rodando. Adicionar atraso no processamento de filas de Produtos para visualizar o Load Balancer roteando requisições nos logs (e, se necessário, adicionar mais produtos para processamento). 
-
+- [x] **PRONTO** — Adicionar os serviços no Kubernetes com duas réplicas da API. 
+- [ ] **PENDENTE** — API REST de Produtos e Load Balancer.
 
 ## IMPROVEMENTS TO-DO LIST 
 
-- [ ] **PENDENTE** — API REST de Produtos.
+
 - [ ] **PENDENTE** — Melhorar a legibilidade do Producer e Consumer da fila de Produtos usando o Exchange Direct.
 - [ ] **PENDENTE** — Extração dos dados do produto desejado utilizando Selenium ou Playwright.
 - [ ] **PENDENTE** — Script de criação e população de registros de produtos no MongoDB.
@@ -66,4 +91,6 @@ Como evolução, o projeto terá suporte ao **Kubernetes** para implantação e 
 
 **KUBERNETES**
 
-- Conteúdo a ser incluído após a implementação do Kubernetes
+- Maria Lazara - https://www.youtube.com/watch?v=z3hOWY46OMQ
+- Fabricio Veronez - https://www.youtube.com/watch?v=8aujujygIRY
+- LINUXtips (Jeferson Vitalino) - https://www.youtube.com/watch?v=zEOeukcJl6E

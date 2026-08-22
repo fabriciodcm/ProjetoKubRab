@@ -1,0 +1,477 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: projectkubrab-secrets
+type: Opaque
+stringData:
+  mongodb-root-username: root
+  mongodb-root-password: root1234
+  mongodb-connection-string: mongodb://root:root1234@mongodb:27017/?authSource=admin
+  rabbitmq-username: app
+  rabbitmq-password: app123
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: projectkubrab-config
+data:
+  RabbitMQ__HostName: rabbitmq
+  RabbitMQ__Port: "5672"
+  ProductApi__BaseUrl: http://dotnetproductspage:8080
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongodb-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+        - name: mongodb
+          image: mongo:8.3.7
+          ports:
+            - name: mongodb
+              containerPort: 27017
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: projectkubrab-secrets
+                  key: mongodb-root-username
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: projectkubrab-secrets
+                  key: mongodb-root-password
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - mongosh --quiet --username "$MONGO_INITDB_ROOT_USERNAME" --password "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "db.adminCommand('ping').ok"
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 12
+          volumeMounts:
+            - name: mongodb-data
+              mountPath: /data/db
+      volumes:
+        - name: mongodb-data
+          persistentVolumeClaim:
+            claimName: mongodb-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb
+spec:
+  selector:
+    app: mongodb
+  ports:
+    - name: mongodb
+      port: 27017
+      targetPort: mongodb
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+        - name: rabbitmq
+          image: rabbitmq:3-management
+          ports:
+            - name: amqp
+              containerPort: 5672
+            - name: management
+              containerPort: 15672
+          env:
+            - name: RABBITMQ_DEFAULT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: projectkubrab-secrets
+                  key: rabbitmq-username
+            - name: RABBITMQ_DEFAULT_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: projectkubrab-secrets
+                  key: rabbitmq-password
+          readinessProbe:
+            exec:
+              command:
+                - rabbitmq-diagnostics
+                - -q
+                - check_port_connectivity
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 12
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq
+spec:
+  selector:
+    app: rabbitmq
+  ports:
+    - name: amqp
+      port: 5672
+      targetPort: amqp
+    - name: management
+      port: 15672
+      targetPort: management
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dotnetproductspage
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dotnetproductspage
+  template:
+    metadata:
+      labels:
+        app: dotnetproductspage
+    spec:
+      containers:
+        - name: dotnetproductspage
+          image: projectkubrab-products-page:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dotnetproductspage
+spec:
+  selector:
+    app: dotnetproductspage
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      initContainers:
+        - name: wait-for-dependencies
+          image: busybox:1.37
+          command:
+            - sh
+            - -c
+            - until nc -z mongodb 27017 && nc -z rabbitmq 5672; do echo "Aguardando MongoDB e RabbitMQ"; sleep 2; done
+      containers:
+        - name: api
+          image: projectkubrab-api:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: MongoDB__ConnectionString
+              valueFrom:
+                secretKeyRef:
+                  name: projectkubrab-secrets
+                  key: mongodb-connection-string
+            - name: RabbitMQ__HostName
+              valueFrom:
+                configMapKeyRef:
+                  name: projectkubrab-config
+                  key: RabbitMQ__HostName
+            - name: RabbitMQ__Port
+              valueFrom:
+                configMapKeyRef:
+                  name: projectkubrab-config
+                  key: RabbitMQ__Port
+            - name: RabbitMQ__UserName
+              valueFrom:
+                secretKeyRef:
+                  name: projectkubrab-secrets
+                  key: rabbitmq-username
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: projectkubrab-secrets
+                  key: rabbitmq-password
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+spec:
+  type: NodePort
+  selector:
+    app: api
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      nodePort: 30000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker-1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: worker-1
+  template:
+    metadata:
+      labels:
+        app: worker-1
+    spec:
+      initContainers:
+        - name: wait-for-dependencies
+          image: busybox:1.37
+          command:
+            - sh
+            - -c
+            - until nc -z rabbitmq 5672 && nc -z dotnetproductspage 8080 && nc -z api 8080; do echo "Aguardando RabbitMQ, página de produtos e API"; sleep 2; done
+      containers:
+        - name: worker
+          image: projectkubrab-worker:latest
+          imagePullPolicy: IfNotPresent
+          args:
+            - MSI RTX 5060 Ti Ventus 2X OC Plus
+          envFrom:
+            - configMapRef:
+                name: projectkubrab-config
+          env:
+            - name: RabbitMQ__UserName
+              valueFrom:
+                secretKeyRef:
+                  name: projectkubrab-secrets
+                  key: rabbitmq-username
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: projectkubrab-secrets
+                  key: rabbitmq-password
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker-2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: worker-2
+  template:
+    metadata:
+      labels:
+        app: worker-2
+    spec:
+      initContainers:
+        - name: wait-for-dependencies
+          image: busybox:1.37
+          command:
+            - sh
+            - -c
+            - until nc -z rabbitmq 5672 && nc -z dotnetproductspage 8080 && nc -z api 8080; do echo "Aguardando RabbitMQ, página de produtos e API"; sleep 2; done
+      containers:
+        - name: worker
+          image: projectkubrab-worker:latest
+          imagePullPolicy: IfNotPresent
+          args:
+            - MSI GeForce RTX 5070 12G VENTUS 2X OC
+          envFrom:
+            - configMapRef:
+                name: projectkubrab-config
+          env:
+            - name: RabbitMQ__UserName
+              valueFrom:
+                secretKeyRef:
+                  name: projectkubrab-secrets
+                  key: rabbitmq-username
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: projectkubrab-secrets
+                  key: rabbitmq-password
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker-3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: worker-3
+  template:
+    metadata:
+      labels:
+        app: worker-3
+    spec:
+      initContainers:
+        - name: wait-for-dependencies
+          image: busybox:1.37
+          command:
+            - sh
+            - -c
+            - until nc -z rabbitmq 5672 && nc -z dotnetproductspage 8080 && nc -z api 8080; do echo "Aguardando RabbitMQ, página de produtos e API"; sleep 2; done
+      containers:
+        - name: worker
+          image: projectkubrab-worker:latest
+          imagePullPolicy: IfNotPresent
+          args:
+            - ASRock RX 9060 XT CL 16GB AMD Radeon
+          envFrom:
+            - configMapRef:
+                name: projectkubrab-config
+          env:
+            - name: RabbitMQ__UserName
+              valueFrom:
+                secretKeyRef:
+                  name: projectkubrab-secrets
+                  key: rabbitmq-username
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: projectkubrab-secrets
+                  key: rabbitmq-password
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker-4
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: worker-4
+  template:
+    metadata:
+      labels:
+        app: worker-4
+    spec:
+      initContainers:
+        - name: wait-for-dependencies
+          image: busybox:1.37
+          command:
+            - sh
+            - -c
+            - until nc -z rabbitmq 5672 && nc -z dotnetproductspage 8080 && nc -z api 8080; do echo "Aguardando RabbitMQ, página de produtos e API"; sleep 2; done
+      containers:
+        - name: worker
+          image: projectkubrab-worker:latest
+          imagePullPolicy: IfNotPresent
+          args:
+            - ASRock RX 9070 XT Challenger AMD 16GB
+          envFrom:
+            - configMapRef:
+                name: projectkubrab-config
+          env:
+            - name: RabbitMQ__UserName
+              valueFrom:
+                secretKeyRef:
+                  name: projectkubrab-secrets
+                  key: rabbitmq-username
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: projectkubrab-secrets
+                  key: rabbitmq-password
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker-5
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: worker-5
+  template:
+    metadata:
+      labels:
+        app: worker-5
+    spec:
+      initContainers:
+        - name: wait-for-dependencies
+          image: busybox:1.37
+          command:
+            - sh
+            - -c
+            - until nc -z rabbitmq 5672 && nc -z dotnetproductspage 8080 && nc -z api 8080; do echo "Aguardando RabbitMQ, página de produtos e API"; sleep 2; done
+      containers:
+        - name: worker
+          image: projectkubrab-worker:latest
+          imagePullPolicy: IfNotPresent
+          args:
+            - Asus TUF-RTX 5070 TI 16G GAMING 16GB
+          envFrom:
+            - configMapRef:
+                name: projectkubrab-config
+          env:
+            - name: RabbitMQ__UserName
+              valueFrom:
+                secretKeyRef:
+                  name: projectkubrab-secrets
+                  key: rabbitmq-username
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: projectkubrab-secrets
+                  key: rabbitmq-password

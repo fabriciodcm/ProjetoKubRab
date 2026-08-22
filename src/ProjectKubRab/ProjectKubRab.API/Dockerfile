@@ -12,10 +12,10 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["ProjectKubRab.API/ProjectKubRab.API.csproj", "ProjectKubRab.API/"]
-RUN dotnet restore "./ProjectKubRab.API/ProjectKubRab.API.csproj"
+COPY ["ProjectKubRab.API.csproj", "."]
+RUN dotnet restore "./ProjectKubRab.API.csproj"
 COPY . .
-WORKDIR "/src/ProjectKubRab.API"
+WORKDIR "/src/."
 RUN dotnet build "./ProjectKubRab.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # Esta fase é usada para publicar o projeto de serviço a ser copiado para a fase final
