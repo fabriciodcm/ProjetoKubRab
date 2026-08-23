@@ -24,10 +24,18 @@ builder.Services.AddSingleton<IProductProducer, ProductProducer>();
 
 builder.Services.AddHostedService(provider => new Worker(
     provider.GetRequiredService<ILogger<Worker>>(),
+    provider.GetRequiredService<IHostApplicationLifetime>(),
     args,
     provider.GetRequiredService<IProductClient>(),
     provider.GetRequiredService<IProductHtmlExtractor>(),
     provider.GetRequiredService<IProductProducer>()));
 
+builder.Services.Configure<HostOptions>(options =>
+{
+    // Automatically kills the process if a background service crashes
+    options.BackgroundServiceExceptionBehavior = BackgroundServiceExceptionBehavior.StopHost;
+});
+
 var host = builder.Build();
+
 host.Run();

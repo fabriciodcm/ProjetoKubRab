@@ -58,8 +58,8 @@ services:
       - public-network
   api:
     build:
-      context: ./src/ProjectKubRab
-      dockerfile: ProjectKubRab.API/Dockerfile
+      context: ./src/ProjectKubRab/ProjectKubRab.API
+      dockerfile: Dockerfile
     ports:
       - "8181:8080"
     depends_on:
