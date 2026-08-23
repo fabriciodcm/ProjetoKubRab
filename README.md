@@ -39,6 +39,14 @@ kind load docker-image projectkubrab-api:latest projectkubrab-products-page:late
 
 kubectl apply -f k8s/deployment.yaml
 
+Para executar os Workers imediatamente ao iniciar o cluster, recrie os Jobs de inicialização a partir dos mesmos templates usados pelos CronJobs:
+
+kubectl delete job worker-gpu-startup worker-cpu-startup --ignore-not-found
+
+kubectl create job worker-gpu-startup --from=cronjob/worker-gpu
+
+kubectl create job worker-cpu-startup --from=cronjob/worker-cpu
+
 kubectl port-forward svc/mongodb 27017:27017
 
 kubectl port-forward svc/dotnetproductspage 8080:8080

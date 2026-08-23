@@ -266,212 +266,106 @@ spec:
       targetPort: http
       nodePort: 30000
 ---
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: batch/v1
+kind: CronJob
 metadata:
-  name: worker-1
+  name: worker-gpu
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: worker-1
-  template:
-    metadata:
-      labels:
-        app: worker-1
+  schedule: "*/15 * * * *"
+  timeZone: America/Sao_Paulo
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 28800
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
     spec:
-      initContainers:
-        - name: wait-for-dependencies
-          image: busybox:1.37
-          command:
-            - sh
-            - -c
-            - until nc -z rabbitmq 5672 && nc -z dotnetproductspage 8080 && nc -z api 8080; do echo "Aguardando RabbitMQ, página de produtos e API"; sleep 2; done
-      containers:
-        - name: worker
-          image: projectkubrab-worker:latest
-          imagePullPolicy: IfNotPresent
-          args:
-            - MSI RTX 5060 Ti Ventus 2X OC Plus
-          envFrom:
-            - configMapRef:
-                name: projectkubrab-config
-          env:
-            - name: RabbitMQ__UserName
-              valueFrom:
-                secretKeyRef:
-                  name: projectkubrab-secrets
-                  key: rabbitmq-username
-            - name: RabbitMQ__Password
-              valueFrom:
-                secretKeyRef:
-                  name: projectkubrab-secrets
-                  key: rabbitmq-password
+      backoffLimit: 3
+      template:
+        metadata:
+          labels:
+            app: worker-gpu
+        spec:
+          restartPolicy: Never
+          initContainers:
+            - name: wait-for-dependencies
+              image: busybox:1.37
+              command:
+                - sh
+                - -c
+                - until nc -z rabbitmq 5672 && nc -z dotnetproductspage 8080 && nc -z api 8080; do echo "Aguardando RabbitMQ, página de produtos e API"; sleep 2; done
+          containers:
+            - name: worker
+              image: projectkubrab-worker:latest
+              imagePullPolicy: IfNotPresent
+              args:
+                - MSI RTX 5060 Ti Ventus 2X OC Plus
+                - MSI GeForce RTX 5070 12G VENTUS 2X OC
+                - ASRock RX 9060 XT CL 16GB AMD Radeon
+                - ASRock RX 9070 XT Challenger AMD 16GB
+                - Asus TUF-RTX 5070 TI 16G GAMING 16GB
+              envFrom:
+                - configMapRef:
+                    name: projectkubrab-config
+              env:
+                - name: RabbitMQ__UserName
+                  valueFrom:
+                    secretKeyRef:
+                      name: projectkubrab-secrets
+                      key: rabbitmq-username
+                - name: RabbitMQ__Password
+                  valueFrom:
+                    secretKeyRef:
+                      name: projectkubrab-secrets
+                      key: rabbitmq-password
 ---
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: batch/v1
+kind: CronJob
 metadata:
-  name: worker-2
+  name: worker-cpu
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: worker-2
-  template:
-    metadata:
-      labels:
-        app: worker-2
+  schedule: "*/15 * * * *"
+  timeZone: America/Sao_Paulo
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 28800
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
     spec:
-      initContainers:
-        - name: wait-for-dependencies
-          image: busybox:1.37
-          command:
-            - sh
-            - -c
-            - until nc -z rabbitmq 5672 && nc -z dotnetproductspage 8080 && nc -z api 8080; do echo "Aguardando RabbitMQ, página de produtos e API"; sleep 2; done
-      containers:
-        - name: worker
-          image: projectkubrab-worker:latest
-          imagePullPolicy: IfNotPresent
-          args:
-            - MSI GeForce RTX 5070 12G VENTUS 2X OC
-          envFrom:
-            - configMapRef:
-                name: projectkubrab-config
-          env:
-            - name: RabbitMQ__UserName
-              valueFrom:
-                secretKeyRef:
-                  name: projectkubrab-secrets
-                  key: rabbitmq-username
-            - name: RabbitMQ__Password
-              valueFrom:
-                secretKeyRef:
-                  name: projectkubrab-secrets
-                  key: rabbitmq-password
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: worker-3
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: worker-3
-  template:
-    metadata:
-      labels:
-        app: worker-3
-    spec:
-      initContainers:
-        - name: wait-for-dependencies
-          image: busybox:1.37
-          command:
-            - sh
-            - -c
-            - until nc -z rabbitmq 5672 && nc -z dotnetproductspage 8080 && nc -z api 8080; do echo "Aguardando RabbitMQ, página de produtos e API"; sleep 2; done
-      containers:
-        - name: worker
-          image: projectkubrab-worker:latest
-          imagePullPolicy: IfNotPresent
-          args:
-            - ASRock RX 9060 XT CL 16GB AMD Radeon
-          envFrom:
-            - configMapRef:
-                name: projectkubrab-config
-          env:
-            - name: RabbitMQ__UserName
-              valueFrom:
-                secretKeyRef:
-                  name: projectkubrab-secrets
-                  key: rabbitmq-username
-            - name: RabbitMQ__Password
-              valueFrom:
-                secretKeyRef:
-                  name: projectkubrab-secrets
-                  key: rabbitmq-password
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: worker-4
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: worker-4
-  template:
-    metadata:
-      labels:
-        app: worker-4
-    spec:
-      initContainers:
-        - name: wait-for-dependencies
-          image: busybox:1.37
-          command:
-            - sh
-            - -c
-            - until nc -z rabbitmq 5672 && nc -z dotnetproductspage 8080 && nc -z api 8080; do echo "Aguardando RabbitMQ, página de produtos e API"; sleep 2; done
-      containers:
-        - name: worker
-          image: projectkubrab-worker:latest
-          imagePullPolicy: IfNotPresent
-          args:
-            - ASRock RX 9070 XT Challenger AMD 16GB
-          envFrom:
-            - configMapRef:
-                name: projectkubrab-config
-          env:
-            - name: RabbitMQ__UserName
-              valueFrom:
-                secretKeyRef:
-                  name: projectkubrab-secrets
-                  key: rabbitmq-username
-            - name: RabbitMQ__Password
-              valueFrom:
-                secretKeyRef:
-                  name: projectkubrab-secrets
-                  key: rabbitmq-password
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: worker-5
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: worker-5
-  template:
-    metadata:
-      labels:
-        app: worker-5
-    spec:
-      initContainers:
-        - name: wait-for-dependencies
-          image: busybox:1.37
-          command:
-            - sh
-            - -c
-            - until nc -z rabbitmq 5672 && nc -z dotnetproductspage 8080 && nc -z api 8080; do echo "Aguardando RabbitMQ, página de produtos e API"; sleep 2; done
-      containers:
-        - name: worker
-          image: projectkubrab-worker:latest
-          imagePullPolicy: IfNotPresent
-          args:
-            - Asus TUF-RTX 5070 TI 16G GAMING 16GB
-          envFrom:
-            - configMapRef:
-                name: projectkubrab-config
-          env:
-            - name: RabbitMQ__UserName
-              valueFrom:
-                secretKeyRef:
-                  name: projectkubrab-secrets
-                  key: rabbitmq-username
-            - name: RabbitMQ__Password
-              valueFrom:
-                secretKeyRef:
-                  name: projectkubrab-secrets
-                  key: rabbitmq-password
+      backoffLimit: 3
+      template:
+        metadata:
+          labels:
+            app: worker-cpu
+        spec:
+          restartPolicy: Never
+          initContainers:
+            - name: wait-for-dependencies
+              image: busybox:1.37
+              command:
+                - sh
+                - -c
+                - until nc -z rabbitmq 5672 && nc -z dotnetproductspage 8080 && nc -z api 8080; do echo "Aguardando RabbitMQ, página de produtos e API"; sleep 2; done
+          containers:
+            - name: worker
+              image: projectkubrab-worker:latest
+              imagePullPolicy: IfNotPresent
+              args:
+                - AMD Ryzen 7 5700X
+                - AMD Ryzen 7 7700X
+                - AMD Ryzen 7 7800X3D
+                - Intel Core i9-14900F
+                - AMD Ryzen 9 9900X3D
+              envFrom:
+                - configMapRef:
+                    name: projectkubrab-config
+              env:
+                - name: RabbitMQ__UserName
+                  valueFrom:
+                    secretKeyRef:
+                      name: projectkubrab-secrets
+                      key: rabbitmq-username
+                - name: RabbitMQ__Password
+                  valueFrom:
+                    secretKeyRef:
+                      name: projectkubrab-secrets
+                      key: rabbitmq-password

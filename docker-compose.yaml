@@ -93,21 +93,13 @@ services:
   #  networks:
   #    - public-network
 
-  worker-1:
+  worker-gpu:
     <<: *worker-base
-    command: ["MSI RTX 5060 Ti Ventus 2X OC Plus"]
-  worker-2:
+    command: ["MSI RTX 5060 Ti Ventus 2X OC Plus", "MSI GeForce RTX 5070 12G VENTUS 2X OC","ASRock RX 9060 XT CL 16GB AMD Radeon","ASRock RX 9070 XT Challenger AMD 16GB","Asus TUF-RTX 5070 TI 16G GAMING 16GB"]
+  worker-cpu:
     <<: *worker-base
-    command: ["MSI GeForce RTX 5070 12G VENTUS 2X OC"]
-  worker-3:
-    <<: *worker-base
-    command: ["ASRock RX 9060 XT CL 16GB AMD Radeon"]
-  worker-4:
-    <<: *worker-base
-    command: ["ASRock RX 9070 XT Challenger AMD 16GB"]
-  worker-5:
-    <<: *worker-base
-    command: ["Asus TUF-RTX 5070 TI 16G GAMING 16GB"]
+    command: ["AMD Ryzen 7 5700X","AMD Ryzen 7 7700X","AMD Ryzen 7 7800X3D","Intel Core i9-14900F","AMD Ryzen 9 9900X3D"]
 networks:
   public-network:
     driver: bridge
+
