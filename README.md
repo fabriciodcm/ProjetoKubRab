@@ -15,8 +15,9 @@ A solução reúne diferentes componentes responsáveis pela coleta, disponibili
 - **ProductsPage**: Página de produtos gerada em client-side desenvolvida com HTML e JS (atualmente não está sendo utilizada).
 - **RabbitMQ**: Message Broker de comunicação assíncrona entre os serviços.
 - **Docker Compose**: Responsável pela criação do ambiente local e pela execução dos serviços em containers.
+- **Kubernetes**: Orquestração dos serviços localmente com Kind.
 
-Como evolução, o projeto terá suporte ao **Kubernetes** para implantação e orquestração dos containers.
+Como evolução, o projeto terá suporte ao  para implantação e orquestração dos containers.
 
 ## COMO EXECUTAR
 
@@ -119,3 +120,4 @@ cloud-provider-kind --enable-lb-port-mapping
 - Maria Lazara - https://www.youtube.com/watch?v=z3hOWY46OMQ
 - Fabricio Veronez - https://www.youtube.com/watch?v=8aujujygIRY
 - LINUXtips (Jeferson Vitalino) - https://www.youtube.com/watch?v=zEOeukcJl6E
+- Anton Putra - https://www.youtube.com/watch?v=RQbc_Yjb9ls
