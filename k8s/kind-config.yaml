@@ -8,8 +8,8 @@ kubeadmConfigPatches:
 nodes:
   - role: control-plane
     extraPortMappings:
-      - containerPort: 30000
-        hostPort: 5000
+      - containerPort: 30080
+        hostPort: 8080
   - role: control-plane
   - role: control-plane
   - role: worker

@@ -37,5 +37,22 @@ namespace ProjectKubRab.API.Infrastructure.Persistence.Repositories
             await _products.InsertOneAsync(product);
             return true;
         }
+
+        public async Task<bool> DeleteAsync(string id)
+        {
+            var result = await _products.DeleteOneAsync(p => p.Id == Guid.Parse(id));
+            return result.DeletedCount > 0;
+        }
+
+        public async Task<Product> GetByIdAsync(string id)
+        {
+            var product = await _products.Find(p => p.Id == Guid.Parse(id)).FirstOrDefaultAsync();
+            return product;
+        }
+
+        public async Task<IEnumerable<Product>> GetAllAsync()
+        {
+            return await _products.Find(_ => true).ToListAsync();
+        }
     }
 }

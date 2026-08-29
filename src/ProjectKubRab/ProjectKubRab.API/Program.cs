@@ -1,8 +1,7 @@
-using MongoDB.Bson;
 using MongoDB.Driver;
+using ProjectKubRab.API.Application.Services;
+using ProjectKubRab.API.Core.Interfaces.Application.Services;
 using ProjectKubRab.API.Core.Interfaces.Repositories;
-using ProjectKubRab.API.Core.Interfaces.Services;
-using ProjectKubRab.API.Core.Services;
 using ProjectKubRab.API.Infrastructure.Messaging;
 using ProjectKubRab.API.Infrastructure.Messaging.Consumers;
 using ProjectKubRab.API.Infrastructure.Persistence.Repositories;
@@ -78,6 +77,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+app.MapGet("/", () => Results.Redirect("/api/Home"));
 
 app.MapControllers();
 

@@ -185,12 +185,14 @@ kind: Service
 metadata:
   name: dotnetproductspage
 spec:
+  type: NodePort
   selector:
     app: dotnetproductspage
   ports:
     - name: http
       port: 8080
       targetPort: http
+      nodePort: 30080
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -246,6 +248,10 @@ spec:
                 secretKeyRef:
                   name: projectkubrab-secrets
                   key: rabbitmq-password
+            - name: KubPOD
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
           readinessProbe:
             tcpSocket:
               port: http
@@ -257,14 +263,13 @@ kind: Service
 metadata:
   name: api
 spec:
-  type: NodePort
+  type: LoadBalancer
   selector:
     app: api
   ports:
     - name: http
-      port: 8080
+      port: 5000
       targetPort: http
-      nodePort: 30000
 ---
 apiVersion: batch/v1
 kind: CronJob

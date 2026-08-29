@@ -8,5 +8,8 @@ namespace ProjectKubRab.API.Core.Interfaces.Repositories
         Task<IEnumerable<Product>> getAllByNameAndDateAsync(string Name, DateOnly? initialDate, DateOnly? finalDate);
         Task<bool> UpdateAsync(Product product);
         Task<bool> InsertAsync(Product product);
+        Task<bool> DeleteAsync(string id);
+        Task<Product> GetByIdAsync(string id);
+        Task<IEnumerable<Product>> GetAllAsync();
     }
 }

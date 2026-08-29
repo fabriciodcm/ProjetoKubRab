@@ -25,8 +25,9 @@ Como evolução, o projeto terá suporte ao **Kubernetes** para implantação e 
 
 docker-compose up -d 
 
-**Kubernetes** primeiro, crie o cluster local com o Kind usando as configurações de k8s/kind-config.yaml. Em seguida, construa as imagens Docker de cada aplicação e carregue-as nos nós do cluster Kind. Depois, aplique os recursos definidos no manifesto k8s/deployment.yaml. A API é exposta por um Service do tipo NodePort, acessível pela porta 5000 do host. Para acessar diretamente serviços internos, como o MongoDB ou a página de produtos, utilize kubectl port-forward em terminais separados. 
+**Kubernetes** primeiro, crie o cluster local com o Kind usando as configurações de k8s/kind-config.yaml. Em seguida, construa as imagens Docker de cada aplicação e carregue-as nos nós do cluster Kind. Depois, aplique os recursos definidos no manifesto k8s/deployment.yaml. A API é exposta por um Service do tipo LoadBalancer (EXTERNAL-IP:5000). A página de produtos é exposta por um Service do tipo NodePort (localhost:8080). Para acessar diretamente serviços internos, como o MongoDB, utilize kubectl port-forward. 
 
+```
 kind create cluster --config k8s/kind-config.yaml
 
 docker build -t projectkubrab-api:latest -f src/ProjectKubRab/ProjectKubRab.API/Dockerfile src/ProjectKubRab/ProjectKubRab.API
@@ -38,9 +39,17 @@ docker build -t projectkubrab-worker:latest -f src/ProjectKubRab/ProjectKubRab.W
 kind load docker-image projectkubrab-api:latest projectkubrab-products-page:latest projectkubrab-worker:latest
 
 kubectl apply -f k8s/deployment.yaml
+```
+
+O IP exato do LoadBalancer não pode ser definido antecipadamente, ele é atribuído pelo provedor de LoadBalancer e aparece em EXTERNAL-IP usando o comando abaixo. O Kubernetes publica esse endereço no status do Service.
+
+```
+kubectl get service api
+```
 
 Para executar os Workers imediatamente ao iniciar o cluster, recrie os Jobs de inicialização a partir dos mesmos templates usados pelos CronJobs:
 
+```
 kubectl delete job worker-gpu-startup worker-cpu-startup --ignore-not-found
 
 kubectl create job worker-gpu-startup --from=cronjob/worker-gpu
@@ -48,8 +57,16 @@ kubectl create job worker-gpu-startup --from=cronjob/worker-gpu
 kubectl create job worker-cpu-startup --from=cronjob/worker-cpu
 
 kubectl port-forward svc/mongodb 27017:27017
+```
 
-kubectl port-forward svc/dotnetproductspage 8080:8080
+Importante! Para utilizar o LoadBalancer no Kind é necessário uma instalação adicional. Após a instalação é necessário rodar o comando no PowerShell como administrador para criar um servoço em segundo plano, e manter executando durante os teste.
+
+```
+go install sigs.k8s.io/cloud-provider-kind@latest
+
+cloud-provider-kind --enable-lb-port-mapping
+```
+
 
 ## ESSENTIALS TO-DO LIST
 
@@ -60,7 +77,7 @@ kubectl port-forward svc/dotnetproductspage 8080:8080
 - [x] **PRONTO** — O API lê o produto extraído da fila do RabbitMQ(Direct). Caso já exista um registro do produto na data da leitura, a API atualiza esse registro; caso contrário, insere um novo. 
 - [x] **PRONTO** — Usar variáveis de ambiente nas aplicações a fim de poder depurar localmente ou via Docker Compose sem precisar alterar as cadeias de conexão(ex: url da página de produtos local localhost:8585 e via Docker Compose dotnetproductspage:8080). 
 - [x] **PRONTO** — Adicionar os serviços no Kubernetes com duas réplicas da API. 
-- [ ] **PENDENTE** — API REST de Produtos e Load Balancer.
+- [x] **PRONTO** — API REST de Produtos e Load Balancer.
 
 ## IMPROVEMENTS TO-DO LIST 
 

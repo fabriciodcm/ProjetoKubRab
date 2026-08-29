@@ -1,6 +1,4 @@
-﻿using DnsClient.Internal;
-using ProjectKubRab.API.Core.Entities;
-using ProjectKubRab.API.Core.Interfaces.Services;
+﻿using ProjectKubRab.API.Core.Interfaces.Application.Services;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
